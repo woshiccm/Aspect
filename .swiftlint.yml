@@ -1,0 +1,116 @@
+disabled_rules: # rule identifiers to exclude from running
+  - force_cast
+  - trailing_comma
+  - opening_brace
+
+opt_in_rules: # Find all the available rules by running: swiftlint rules
+  - anyobject_protocol
+  - array_init
+  - closure_spacing
+  - discouraged_object_literal
+  - empty_count
+  - empty_string
+  - explicit_init
+  - fallthrough
+  - first_where
+  - identical_operands
+  - implicit_return
+  - let_var_whitespace
+  - multiline_parameters
+  - overridden_super_call
+  - override_in_extension
+  - pattern_matching_keywords
+  - private_action
+  - private_outlet
+  - prohibited_super_call
+  - sorted_first_last
+  - unused_import
+  - yoda_condition
+
+included: # paths to include during linting. `--path` is ignored if present.
+  - ./
+excluded: # paths to ignore during linting. Takes precedence over `included`.
+  - Carthage
+  - Pods
+
+force_try:
+  severity: warning # explicitly
+
+trailing_whitespace: 
+  ignores_empty_lines: true
+vertical_whitespace:
+  max_empty_lines: 2
+
+line_length: 200
+
+type_body_length:
+  - 300 # warning
+  - 400 # error
+
+file_length:
+  warning: 500
+  error: 1200
+
+function_parameter_count:
+  warning: 8
+  error: 10
+
+function_body_length:
+  warning: 80
+  error: 100
+
+cyclomatic_complexity:
+  warning: 15
+  warning: 20
+
+type_name:
+  min_length: 3 # only warning
+  max_length: 
+    warning: 40
+    error: 50
+  excluded:
+    - R
+    - ID
+    - Key
+
+identifier_name:
+  min_length: 3
+  max_length:
+    warning: 40
+    error: 50
+  allowed_symbols: "_"
+  excluded: # excluded via string array
+    - id
+    - ip
+    - in
+    - vc
+    - URL
+
+large_tuple:
+  warning: 4
+  error: 5
+
+nesting:
+  type_level:
+    warning: 2
+
+custom_rules:
+  line_break_after_curly_brackets:
+    name: 'Line break after curly brackets'
+    regex: '^[^\n]*[ \t](?!class|struct|enum|protocol|extension)[ \t][^\n]+\{$\n\s*$'
+    message: "Blank line should be removed after left curly brackets({)."
+    severity: warning
+
+  attributes_with_name:
+    name: 'Attribute with Name'
+    regex: '(@objc|@nonobjc){1}\({1}[A-Za-z0-9]+\){1}[ A-Za-z0-9]+'
+    message: "Attributes should be on their own lines if has name in parentheses."
+    severity: warning
+
+  attributes_without_name:
+    name: 'Attribute without Name'
+    regex: '(@objc|@nonobjc){1}[()]{0}\n+'
+    message: "Attributes should be on the same line if hasn't name in parentheses."
+    severity: warning
+
+reporter: "xcode" # reporter type (xcode, json, csv, checkstyle, junit, html, emoji)
