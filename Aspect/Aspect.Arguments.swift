@@ -30,35 +30,33 @@ public extension NSObject {
     func hook(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo) -> Void)
+        block: @escaping(AspectInfo) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             block(aspectInfo)
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     func hook<Arg1>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1) -> Void)
+        block: @escaping(AspectInfo, Arg1) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 1,
                 let arg1 = aspectInfo.arguments[0] as? Arg1 else { return }
             block(aspectInfo, arg1)
         }
-
-        let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedBlock)
     }
 
     func hook<Arg1, Arg2>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 2,
@@ -68,13 +66,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     func hook<Arg1, Arg2, Arg3>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 3,
@@ -85,13 +83,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     func hook<Arg1, Arg2, Arg3, Arg4>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 4,
@@ -103,13 +101,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     func hook<Arg1, Arg2, Arg3, Arg4, Arg5>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 5,
@@ -124,13 +122,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     func hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 6,
@@ -146,14 +144,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
-
 
     func hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 7,
@@ -170,7 +167,7 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 }
 
@@ -179,20 +176,20 @@ public extension NSObject {
     class func hook(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo) -> Void)
+        block: @escaping(AspectInfo) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             block(aspectInfo)
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     class func hook<Arg1>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1) -> Void) throws
+        block: @escaping(AspectInfo, Arg1) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 1,
@@ -201,13 +198,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     class func hook<Arg1, Arg2>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 2,
@@ -217,13 +214,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     class func hook<Arg1, Arg2, Arg3>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 3,
@@ -234,13 +231,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     class func hook<Arg1, Arg2, Arg3, Arg4>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 4,
@@ -252,13 +249,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     class func hook<Arg1, Arg2, Arg3, Arg4, Arg5>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 5,
@@ -273,13 +270,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     class func hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 6,
@@ -295,13 +292,13 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
     class func hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7>(
         selector: Selector,
         strategy: AspectStrategy = .before,
-        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7) -> Void)
+        block: @escaping(AspectInfo, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7) -> Void) throws -> AspectToken
     {
         let wrappedBlock: @convention(block) (AspectInfo) -> Void = { aspectInfo in
             guard aspectInfo.arguments.count == 7,
@@ -318,6 +315,6 @@ public extension NSObject {
         }
 
         let wrappedObject: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
-        hook(selector: selector, strategy: strategy, block: wrappedObject)
+        return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 }

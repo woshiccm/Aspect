@@ -12,16 +12,22 @@ Aspect is a lightweight, pure-Swift library for for aspect oriented programming.
 ## Features
 
 - [x] Hook object selector
-- [x] Provide a more friendly Swift interface
+- [x] Hook different classes selector in the same hierarchy
+- [x] Hook class and static selector
+- [x] Provide more friendly Swift interfaces
 
 ## Usage
 ### Hook object selector with OC block
 
 ```
 public class Test: NSObject {
-   @objc dynamic func test(id: Int, name: String) {
-        print(id)
-        print(name)
+
+    @objc dynamic func test(id: Int, name: String) {
+
+    }
+
+    @objc dynamic static func classSelector(id: Int, name: String) {
+
     }
 }
 
@@ -34,15 +40,34 @@ let block: AnyObject = unsafeBitCast(wrappedBlock, to: AnyObject.self)
 test.hook(selector: #selector(Test.test(id:name:)), strategy: .before, block: )
 ```
 
-
 ### Hook object selector with Swift block
 
 ```
-test.hook(selector: #selector(Test.test(id:name:)), strategy: .before) { (aspectInfo: AspectInfo, id: Int, name: String) in
+let test = Test()
+
+_ = try? test.hook(selector: #selector(Test.test(id:name:)), strategy: .before) { (_, id: Int, name: String) in
 
 }
 
 ```
+
+### Hook class instance selector with Swift block
+
+```
+_ = try? Test.hook(selector: #selector(Test.test(id:name:)), strategy: .before) { (_, id: Int, name: String) in
+
+}
+
+```
+
+### Hook class class and static selector with Swift block
+```
+
+_ = try? Test.hook(selector: #selector(Test.classSelector(id:name:)), strategy: .before) { (_, id: Int, name: String) in
+
+}
+```
+
 
 
 ## Requirements
@@ -54,7 +79,7 @@ test.hook(selector: #selector(Test.test(id:name:)), strategy: .before) { (aspect
 ## Next Steps
 
 
-* Support hook class selector
+* Support remove aspect
 * Improve detail
 * Support Cocopods install
 

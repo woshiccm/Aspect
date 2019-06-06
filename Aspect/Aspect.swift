@@ -71,8 +71,8 @@ internal class AspectsCache {
     }
 
     // TODO: remove aspect.
-    func remove(_ aspect: AspectIdentifier) -> Bool {
-        return true
+    func remove(_ aspect: AspectIdentifier) {
+
     }
 
     func hasAspects() -> Bool {
@@ -88,33 +88,41 @@ extension NSObject {
     ///   - selector: The selector need to hook.
     ///   - strategy: The hook strategy, `.before` by default.
     ///   - block: The hook block.
-    public func hook(selector: Selector, strategy: AspectStrategy = .before, block: AnyObject) {
-        ahook(object: self, selector: selector, strategy: strategy, block: block)
+    ///
+    ///   - returns: AspectToken, you can use it to remove hook.
+    public func hook(selector: Selector, strategy: AspectStrategy = .before, block: AnyObject) throws -> AspectToken {
+        return try ahook(object: self, selector: selector, strategy: strategy, block: block)
     }
 }
 
 extension NSObject {
 
-    // TODO: Hook class selector.
-    public class func hook(selector: Selector, strategy: AspectStrategy, block: AnyObject) {
-        ahook(object: self, selector: selector, strategy: strategy, block: block)
+    /// Hook an object selector.
+    ///
+    /// - Parameters:
+    ///   - selector: The selector need to hook.
+    ///   - strategy: The hook strategy, `.before` by default.
+    ///   - block: The hook block.
+    ///   - returns: AspectToken, you can use it to remove hook.
+    public class func hook(selector: Selector, strategy: AspectStrategy, block: AnyObject) throws -> AspectToken {
+        return try ahook(object: self, selector: selector, strategy: strategy, block: block)
     }
 }
 
-func ahook(object: AnyObject, selector: Selector, strategy: AspectStrategy, block: AnyObject) {
-    lock.performLocked {
-        guard let identifier = AspectIdentifier.identifier(with: selector, object: object, strategy: strategy, block: block) else { return }
+func ahook(object: AnyObject, selector: Selector, strategy: AspectStrategy, block: AnyObject) throws -> AspectToken {
+    return try lock.performLocked {
+        let identifier = try AspectIdentifier.identifier(with: selector, object: object, strategy: strategy, block: block)
 
-        let aspectCache = getContainerForObject(object: object, selector: selector)
-        aspectCache.add(identifier, option: strategy)
+        let cache = getAspectCache(for: object, selector: selector)
+        cache.add(identifier, option: strategy)
 
-        let subclass: AnyClass = hookClass(object: object)
-        let method = class_getInstanceMethod(subclass, selector)
-        let impl: IMP = method.map(method_getImplementation) ?? _aspect_objc_msgForward
+        let subclass: AnyClass = try hookClass(object: object, selector: selector)
+        let method = class_getInstanceMethod(subclass, selector) ?? class_getClassMethod(subclass, selector)
 
-        guard impl != _aspect_objc_msgForward else { return }
+        guard let impl = method.map(method_getImplementation), let typeEncoding = method.flatMap(method_getTypeEncoding) else {
+            throw AspectError.unrecognizedSelector
+        }
 
-        guard let typeEncoding = method.flatMap(method_getTypeEncoding) else { return }
         assert(checkTypeEncoding(typeEncoding))
 
         let aliasSelector = selector.alias
@@ -124,40 +132,51 @@ func ahook(object: AnyObject, selector: Selector, strategy: AspectStrategy, bloc
             precondition(succeeds, "Aspect attempts to swizzle a selector that has message forwarding enabled with a runtime injected implementation. This is unsupported in the current version.")
         }
 
+        class_addMethod(subclass, aliasSelector, impl, typeEncoding)
         class_replaceMethod(subclass, selector, _aspect_objc_msgForward, typeEncoding)
+        return identifier
     }
 }
 
-private func hookClass(object: AnyObject) -> AnyClass {
+private func hookClass(object: AnyObject, selector: Selector) throws -> AnyClass {
     let perceivedClass: AnyClass = object.objcClass
     let realClass: AnyClass = object_getClass(object)!
-
     let className = String(cString: class_getName(realClass))
 
     if className.hasPrefix(Constants.subclassSuffix) {
         return realClass
     } else if class_isMetaClass(realClass) {
-        // TODO:
-    } else if perceivedClass != realClass {
-        // TODO:
-    }
-
-    let subclassName = Constants.subclassSuffix+className
-
-    let subclass: AnyClass = subclassName.withCString { cString in
-        if let existingClass = objc_getClass(cString) as! AnyClass? {
-            return existingClass
+        if class_getInstanceMethod(perceivedClass, selector) != nil {
+            swizzleForwardInvocation(perceivedClass)
+            return perceivedClass
         } else {
-            let subclass: AnyClass = objc_allocateClassPair(perceivedClass, cString, 0)!
-            swizzleForwardInvocation(subclass)
-            replaceGetClass(in: subclass, decoy: perceivedClass)
-            objc_registerClassPair(subclass)
-            return subclass
+            swizzleForwardInvocation(realClass)
+            return realClass
         }
     }
 
-    object_setClass(object, subclass)
-    return subclass
+    let subclassName = Constants.subclassSuffix+className
+    let subclass: AnyClass? = subclassName.withCString { cString in
+        if let existingClass = objc_getClass(cString) as! AnyClass? {
+            return existingClass
+        } else {
+            if let subclass: AnyClass = objc_allocateClassPair(perceivedClass, cString, 0) {
+                swizzleForwardInvocation(subclass)
+                replaceGetClass(in: subclass, decoy: perceivedClass)
+                objc_registerClassPair(subclass)
+                return subclass
+            } else {
+                return nil
+            }
+        }
+    }
+
+    guard let nonnullSubclass = subclass else {
+        throw AspectError.failedToAllocateClassPair
+    }
+
+    object_setClass(object, nonnullSubclass)
+    return nonnullSubclass
 }
 
 private func swizzleForwardInvocation(_ realClass: AnyClass) {
@@ -171,48 +190,40 @@ private func swizzleForwardInvocation(_ realClass: AnyClass) {
 }
 
 private let aspectForwardInvocation: @convention(block) (Unmanaged<NSObject>, AnyObject) -> Void = { objectRef, invocation in
+    let object = objectRef.takeUnretainedValue() as AnyObject
     let selector = invocation.selector!
-    var aliasSelector = invocation.selector!.alias
+
+    var aliasSelector = selector.alias
     var aliasSelectorKey = AssociationKey<AspectsCache?>(aliasSelector)
 
-    guard let aspectCache = (objectRef.takeUnretainedValue() as NSObject).associations.value(forKey: aliasSelectorKey) else {
+    let selectorKey = AssociationKey<AspectsCache?>(selector)
+    let associations = Associations(object.objcClass as AnyObject)
+
+    let aspectCache: AspectsCache
+
+    if let cache = associations.value(forKey: selectorKey) {
+        aspectCache = cache
+    } else if let cache = (objectRef.takeUnretainedValue() as NSObject).associations.value(forKey: aliasSelectorKey) {
+        aspectCache = cache
+    } else {
         return
     }
 
-    var info = AspectInfo(instance: objectRef.takeUnretainedValue() as AnyObject, invocation: invocation)
+    var info = AspectInfo(instance: object, invocation: invocation)
 
     // Before hooks.
-    for aspect in aspectCache.beforeAspects {
-        aspect.invoke(with: &info)
-    }
-
-    var respondsToAlias = true
+    aspectCache.beforeAspects.invoke(with: &info)
 
     if !aspectCache.insteadAspects.isEmpty {
-        for aspect in aspectCache.insteadAspects {
-            aspect.invoke(with: &info)
-        }
+        // Instead hooks
+        aspectCache.insteadAspects.invoke(with: &info)
     } else {
-        if let target = invocation.objcTarget, let klass = object_getClass(target) {
-            repeat
-            {
-                if true == klass.instancesRespond(to: aliasSelector) {
-                    invocation.setSelector(aliasSelector)
-                    invocation.invoke()
-                    break
-                } else {
-                    respondsToAlias = false
-                }
-            } while !respondsToAlias && klass == class_getSuperclass(klass)
-        } else {
-            respondsToAlias = false
-        }
+        invocation.setSelector(aliasSelector)
+        invocation.invoke()
     }
 
     // After hooks.
-    for aspect in aspectCache.afterAspects {
-        aspect.invoke(with: &info)
-    }
+    aspectCache.afterAspects.invoke(with: &info)
 }
 
 private func replaceGetClass(in class: AnyClass, decoy perceivedClass: AnyClass) {
@@ -233,15 +244,39 @@ private func replaceGetClass(in class: AnyClass, decoy perceivedClass: AnyClass)
                             ObjCMethodEncoding.getClass)
 }
 
-func getContainerForObject(object: AnyObject, selector: Selector) -> AspectsCache {
-    let aliasSelector = selector.alias
-    let aliasSelectorKey = AssociationKey<AspectsCache?>(aliasSelector)
-    var aspectCache = (object as! NSObject).associations.value(forKey: aliasSelectorKey)
+func getAspectCache(for object: AnyObject, selector: Selector) -> AspectsCache {
+    let realClass: AnyClass = object_getClass(object)!
+    let selectorKey: AssociationKey<AspectsCache?>
+
+    if class_isMetaClass(realClass) {
+        selectorKey = AssociationKey<AspectsCache?>(selector)
+    } else {
+        let aliasSelector = selector.alias
+        selectorKey = AssociationKey<AspectsCache?>(aliasSelector)
+    }
+    var aspectCache = (object as! NSObject).associations.value(forKey: selectorKey)
 
     if aspectCache == nil {
         aspectCache = AspectsCache()
-        (object as! NSObject).associations.setValue(aspectCache, forKey: aliasSelectorKey)
+        (object as! NSObject).associations.setValue(aspectCache, forKey: selectorKey)
     }
 
     return aspectCache!
+}
+
+// TODO: remove aspect.
+func remove(_ aspect: AspectIdentifier) {
+    return lock.performLocked {
+        guard let object = aspect.object else { return }
+
+        let aspectCache = getAspectCache(for: object, selector: aspect.selector)
+        aspectCache.remove(aspect)
+    }
+}
+
+extension Collection where Iterator.Element == AspectIdentifier {
+
+    func invoke(with info: inout AspectInfo) {
+        self.forEach { $0.invoke(with: &info) }
+    }
 }

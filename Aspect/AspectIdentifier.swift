@@ -25,10 +25,21 @@
 
 import Foundation
 
+public protocol AspectToken {
+    func remove()
+}
+
+extension AspectIdentifier: AspectToken {
+
+    public func remove() {
+        Aspect.remove(self)
+    }
+}
+
 internal struct AspectIdentifier {
 
     let selector: Selector
-    let object: AnyObject
+    weak var object: AnyObject?
     let strategy: AspectStrategy
     let block: AnyObject
     var blockSignature: AnyObject?
@@ -57,18 +68,19 @@ internal struct AspectIdentifier {
     ///   - object: The object/class.
     ///   - strategy: The hook strategy.
     ///   - block: The hook strategy.
-    static func identifier(with selector: Selector, object: AnyObject, strategy: AspectStrategy, block: AnyObject) -> AspectIdentifier? {
+    static func identifier(with selector: Selector, object: AnyObject, strategy: AspectStrategy, block: AnyObject) throws -> AspectIdentifier {
         guard let blockSignature = AspectBlock(block).blockSignature else {
-            return nil
+            throw AspectError.missingBlockSignature
         }
 
-        guard isCompatibleBlockSignature(blockSignature: blockSignature, object: object, selector: selector) else {
-            return nil
+        do {
+            try isCompatibleBlockSignature(blockSignature: blockSignature, object: object, selector: selector)
+            var aspectIdentifier = AspectIdentifier(selector: selector, object: object, strategy: strategy, block: block)
+            aspectIdentifier.blockSignature = blockSignature
+            return aspectIdentifier
+        } catch {
+            throw error
         }
-
-        var aspectIdentifier = AspectIdentifier(selector: selector, object: object, strategy: strategy, block: block)
-        aspectIdentifier.blockSignature = blockSignature
-        return aspectIdentifier
     }
 
     /// Compare block Signature and object method Signature are the same
@@ -77,19 +89,21 @@ internal struct AspectIdentifier {
     ///   - blockSignature: The block Signature.
     ///   - object: The object/class.
     ///   - selector: The selector need to hook.
-    static func isCompatibleBlockSignature(blockSignature: AnyObject, object: AnyObject, selector: Selector) -> Bool {
-        guard let method = class_getInstanceMethod(type(of: object), selector), let typeEncoding = method_getTypeEncoding(method) else {
-                object.doesNotRecognizeSelector?(selector)
-                //            throw AspectError.unrecognizedSelector
-                return false
+    static func isCompatibleBlockSignature(blockSignature: AnyObject, object: AnyObject, selector: Selector) throws {
+        let perceivedClass: AnyClass = object.objcClass
+        let realClass: AnyClass = object_getClass(object)!
+        let method = class_getInstanceMethod(perceivedClass, selector) ?? class_getClassMethod(realClass, selector)
+
+        guard let nonnullMethod = method, let typeEncoding = method_getTypeEncoding(nonnullMethod) else {
+            object.doesNotRecognizeSelector?(selector)
+            throw AspectError.unrecognizedSelector
         }
 
         let signature = NSMethodSignature.signature(objCTypes: typeEncoding)
-
         var signaturesMatch = true
 
         if blockSignature.objcNumberOfArguments > signature.objcNumberOfArguments {
-            return false
+            signaturesMatch = false
         } else {
             if blockSignature.objcNumberOfArguments > 1 {
                 let rawEncoding = blockSignature.getArgumentType(at: UInt(1))
@@ -116,9 +130,7 @@ internal struct AspectIdentifier {
         }
 
         if !signaturesMatch {
-            //        throw AspectError.blockSignatureNotMatch
-            return false
+            throw AspectError.blockSignatureNotMatch
         }
-        return true
     }
 }

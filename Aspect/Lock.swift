@@ -78,8 +78,8 @@ internal class SpinLock: Lock {
 internal extension SpinLock {
 
     @inline(__always)
-    final func performLocked(_ action: () -> Void) {
+    final func performLocked<Result>(_ action: () throws -> Result) rethrows -> Result {
         lock(); defer { unlock() }
-        action()
+        return try action()
     }
 }
