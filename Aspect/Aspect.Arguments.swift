@@ -27,6 +27,7 @@ import Foundation
 
 public extension NSObject {
 
+    @discardableResult
     func hook(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -40,6 +41,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     func hook<Arg1>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -53,6 +55,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedBlock)
     }
 
+    @discardableResult
     func hook<Arg1, Arg2>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -69,6 +72,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     func hook<Arg1, Arg2, Arg3>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -86,6 +90,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     func hook<Arg1, Arg2, Arg3, Arg4>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -104,6 +109,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     func hook<Arg1, Arg2, Arg3, Arg4, Arg5>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -125,6 +131,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     func hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -147,6 +154,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     func hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -172,7 +180,7 @@ public extension NSObject {
 }
 
 public extension NSObject {
-
+    @discardableResult
     class func hook(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -186,6 +194,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     class func hook<Arg1>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -201,6 +210,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     class func hook<Arg1, Arg2>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -217,6 +227,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     class func hook<Arg1, Arg2, Arg3>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -234,6 +245,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     class func hook<Arg1, Arg2, Arg3, Arg4>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -252,6 +264,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     class func hook<Arg1, Arg2, Arg3, Arg4, Arg5>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -273,6 +286,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     class func hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6>(
         selector: Selector,
         strategy: AspectStrategy = .before,
@@ -295,6 +309,7 @@ public extension NSObject {
         return try hook(selector: selector, strategy: strategy, block: wrappedObject)
     }
 
+    @discardableResult
     class func hook<Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Arg7>(
         selector: Selector,
         strategy: AspectStrategy = .before,
